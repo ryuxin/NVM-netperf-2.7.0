@@ -835,33 +835,9 @@ process_requests()
       recv_tcp_stream();
       break;
 
-    case DO_TCP_MAERTS:
-      recv_tcp_maerts();
-      break;
-
     case DO_TCP_RR:
       recv_tcp_rr();
       break;
-
-    case DO_TCP_CRR:
-      recv_tcp_conn_rr();
-      break;
-
-    case DO_TCP_CC:
-      recv_tcp_cc();
-      break;
-
-#ifdef DO_1644
-    case DO_TCP_TRR:
-      recv_tcp_tran_rr();
-      break;
-#endif /* DO_1644 */
-
-#ifdef DO_NBRR
-    case DO_TCP_NBRR:
-      recv_tcp_nbrr();
-      break;
-#endif /* DO_NBRR */
 
     case DO_UDP_STREAM:
       recv_udp_stream();
@@ -871,108 +847,7 @@ process_requests()
       recv_udp_rr();
       break;
 
-#ifdef WANT_DLPI
-
-    case DO_DLPI_CO_RR:
-      recv_dlpi_co_rr();
-      break;
-
-    case DO_DLPI_CL_RR:
-      recv_dlpi_cl_rr();
-      break;
-
-    case DO_DLPI_CO_STREAM:
-      recv_dlpi_co_stream();
-      break;
-
-    case DO_DLPI_CL_STREAM:
-      recv_dlpi_cl_stream();
-      break;
-
-#endif /* WANT_DLPI */
-
-#ifdef WANT_UNIX
-
-    case DO_STREAM_STREAM:
-      recv_stream_stream();
-      break;
-
-    case DO_STREAM_RR:
-      recv_stream_rr();
-      break;
-
-    case DO_DG_STREAM:
-      recv_dg_stream();
-      break;
-
-    case DO_DG_RR:
-      recv_dg_rr();
-      break;
-
-#endif /* WANT_UNIX */
-
-#ifdef WANT_XTI
-    case DO_XTI_TCP_STREAM:
-      recv_xti_tcp_stream();
-      break;
-
-    case DO_XTI_TCP_RR:
-      recv_xti_tcp_rr();
-      break;
-
-    case DO_XTI_UDP_STREAM:
-      recv_xti_udp_stream();
-      break;
-
-    case DO_XTI_UDP_RR:
-      recv_xti_udp_rr();
-      break;
-
-#endif /* WANT_XTI */
-
-#ifdef WANT_SCTP
-    case DO_SCTP_STREAM:
-      recv_sctp_stream();
-      break;
-
-    case DO_SCTP_STREAM_MANY:
-      recv_sctp_stream_1toMany();
-      break;
-
-    case DO_SCTP_RR:
-      recv_sctp_rr();
-      break;
-
-    case DO_SCTP_RR_MANY:
-      recv_sctp_rr_1toMany();
-      break;
-#endif
-
-#ifdef WANT_SDP
-    case DO_SDP_STREAM:
-      recv_sdp_stream();
-      break;
-
-    case DO_SDP_MAERTS:
-      recv_sdp_maerts();
-      break;
-
-    case DO_SDP_RR:
-      recv_sdp_rr();
-      break;
-#endif
-
-#ifdef WANT_OMNI
-    case DO_OMNI:
-      recv_omni();
-      break;
-#endif
-
     case PASSPHRASE:
-      if (debug) {
-	fprintf(where,"Ignoring an unexpected passphrase control message\n");
-	fflush(where);
-      }
       break;
 
     default:
@@ -1505,15 +1380,6 @@ check_if_inetd() {
 int _cdecl
 main(int argc, char *argv[]) {
 
-#ifdef WIN32
-  WSADATA	wsa_data ;
-
-  /* Initialize the winsock lib do we still want version 2.2? */
-  if ( WSAStartup(MAKEWORD(2,2), &wsa_data) == SOCKET_ERROR ){
-    printf("WSAStartup() failed : %lu\n", GetLastError()) ;
-    return -1 ;
-  }
-#endif /* WIN32 */
 
   /* Save away the program name */
   program = (char *)malloc(strlen(argv[0]) + 1);
