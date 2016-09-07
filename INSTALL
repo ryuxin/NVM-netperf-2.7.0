@@ -4,6 +4,11 @@ Foundation, Inc.
    This file is free documentation; the Free Software Foundation gives
 unlimited permission to copy, distribute and modify it.
 
+make command
+================
+gcc     -o netperf netperf.o netlib.o netsh.o nettest_bsd.o nettest_dlpi.o nettest_unix.o nettest_xti.o nettest_sctp.o nettest_sdp.o nettest_omni.o net_uuid.o dscp.o netcpu_procstat.o  -lm 
+gcc     -o netserver netserver.o netlib.o netsh.o nettest_bsd.o nettest_dlpi.o nettest_unix.o nettest_xti.o nettest_sctp.o nettest_sdp.o nettest_omni.o net_uuid.o dscp.o netcpu_procstat.o  -lm 
+
 Basic Installation
 ==================
 

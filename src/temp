@@ -1,0 +1,42 @@
+Making all in missing
+make[1]: Entering directory `/home/ryx/research/app/NVM-netperf-2.7.0/src/missing'
+Making all in m4
+make[2]: Entering directory `/home/ryx/research/app/NVM-netperf-2.7.0/src/missing/m4'
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/ryx/research/app/NVM-netperf-2.7.0/src/missing/m4'
+make[2]: Entering directory `/home/ryx/research/app/NVM-netperf-2.7.0/src/missing'
+make[2]: Nothing to be done for `all-am'.
+make[2]: Leaving directory `/home/ryx/research/app/NVM-netperf-2.7.0/src/missing'
+make[1]: Leaving directory `/home/ryx/research/app/NVM-netperf-2.7.0/src/missing'
+make[1]: Entering directory `/home/ryx/research/app/NVM-netperf-2.7.0/src'
+gcc -DHAVE_CONFIG_H -I. -I..      -MT netperf.o -MD -MP -MF .deps/netperf.Tpo -c -o netperf.o netperf.c
+mv -f .deps/netperf.Tpo .deps/netperf.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT netlib.o -MD -MP -MF .deps/netlib.Tpo -c -o netlib.o netlib.c
+mv -f .deps/netlib.Tpo .deps/netlib.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT netsh.o -MD -MP -MF .deps/netsh.Tpo -c -o netsh.o netsh.c
+mv -f .deps/netsh.Tpo .deps/netsh.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT nettest_bsd.o -MD -MP -MF .deps/nettest_bsd.Tpo -c -o nettest_bsd.o nettest_bsd.c
+mv -f .deps/nettest_bsd.Tpo .deps/nettest_bsd.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT nettest_dlpi.o -MD -MP -MF .deps/nettest_dlpi.Tpo -c -o nettest_dlpi.o nettest_dlpi.c
+mv -f .deps/nettest_dlpi.Tpo .deps/nettest_dlpi.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT nettest_unix.o -MD -MP -MF .deps/nettest_unix.Tpo -c -o nettest_unix.o nettest_unix.c
+mv -f .deps/nettest_unix.Tpo .deps/nettest_unix.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT nettest_xti.o -MD -MP -MF .deps/nettest_xti.Tpo -c -o nettest_xti.o nettest_xti.c
+mv -f .deps/nettest_xti.Tpo .deps/nettest_xti.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT nettest_sctp.o -MD -MP -MF .deps/nettest_sctp.Tpo -c -o nettest_sctp.o nettest_sctp.c
+mv -f .deps/nettest_sctp.Tpo .deps/nettest_sctp.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT nettest_sdp.o -MD -MP -MF .deps/nettest_sdp.Tpo -c -o nettest_sdp.o nettest_sdp.c
+mv -f .deps/nettest_sdp.Tpo .deps/nettest_sdp.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT nettest_omni.o -MD -MP -MF .deps/nettest_omni.Tpo -c -o nettest_omni.o nettest_omni.c
+mv -f .deps/nettest_omni.Tpo .deps/nettest_omni.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT net_uuid.o -MD -MP -MF .deps/net_uuid.Tpo -c -o net_uuid.o net_uuid.c
+mv -f .deps/net_uuid.Tpo .deps/net_uuid.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT dscp.o -MD -MP -MF .deps/dscp.Tpo -c -o dscp.o dscp.c
+mv -f .deps/dscp.Tpo .deps/dscp.Po
+gcc -DHAVE_CONFIG_H -I. -I..      -MT netcpu_procstat.o -MD -MP -MF .deps/netcpu_procstat.Tpo -c -o netcpu_procstat.o netcpu_procstat.c
+mv -f .deps/netcpu_procstat.Tpo .deps/netcpu_procstat.Po
+gcc     -o netperf netperf.o netlib.o netsh.o nettest_bsd.o nettest_dlpi.o nettest_unix.o nettest_xti.o nettest_sctp.o nettest_sdp.o nettest_omni.o net_uuid.o dscp.o netcpu_procstat.o  -lm 
+gcc -DHAVE_CONFIG_H -I. -I..      -MT netserver.o -MD -MP -MF .deps/netserver.Tpo -c -o netserver.o netserver.c
+mv -f .deps/netserver.Tpo .deps/netserver.Po
+gcc     -o netserver netserver.o netlib.o netsh.o nettest_bsd.o nettest_dlpi.o nettest_unix.o nettest_xti.o nettest_sctp.o nettest_sdp.o nettest_omni.o net_uuid.o dscp.o netcpu_procstat.o  -lm 
+make[1]: Leaving directory `/home/ryx/research/app/NVM-netperf-2.7.0/src'
