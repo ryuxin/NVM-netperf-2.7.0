@@ -351,7 +351,7 @@
 /* #undef WANT_DLPI */
 
 /* Define to one to enable initial _RR burst support. May affect results. */
-#define WANT_FIRST_BURST /**/
+/* #define WANT_FIRST_BURST */
 
 /* Define to one to enable histogram support. May affect results. */
 /* #undef WANT_HISTOGRAM */
@@ -360,10 +360,10 @@
 /* #undef WANT_INTERVALS */
 
 /* Define to one to migrate classic to OMNI tests. */
-#define WANT_MIGRATION /**/
+/* #define WANT_MIGRATION */
 
 /* Define to one to include OMNI tests. */
-#define WANT_OMNI /**/
+/* #define WANT_OMNI */
 
 /* Define to one to include SCTP tests. */
 /* #undef WANT_SCTP */

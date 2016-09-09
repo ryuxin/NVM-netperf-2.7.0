@@ -205,170 +205,12 @@ extern	int	optind, opterr;
 
 static void
 init_netserver_globals() {
-
-#if defined(__VMS) || defined(VMWARE_UW)
-  spawn_on_accept = 0;
-  want_daemonize = 0;
-#else
   spawn_on_accept = 1;
-#if defined(WIN32)
-  /* we only know how to spawn in WIN32, not daemonize */
-  want_daemonize = 0;
-#else
   want_daemonize = 1;
-#endif /* WIN32 */
-#endif /* __VMS || VMWARE_UW */
 
   child = 0;
   not_inetd = 0;
   netperf_daemon = 0;
-}
-
-void
-unlink_empty_debug_file() {
-
-#if !defined(WIN32)
-  struct stat buf;
-
-  if (stat(FileName,&buf)== 0) {
-
-    if (buf.st_size == 0)
-      unlink(FileName);
-  }
-#endif
-}
-
-/* it is important that set_server_sock() be called before this
-   routine as we depend on the control socket being dup()ed out of the
-   way when we go messing about with the streams. */
-void
-open_debug_file()
-{
-#if !defined WIN32
-#define NETPERF_NULL "/dev/null"
-#else
-#define NETPERF_NULL "nul"
-#endif
-
-  FILE *rd_null_fp;
-
-  if (where != NULL) fflush(where);
-
-  snprintf(FileName,
-	   sizeof(FileName),
-#if defined(WIN32)
-	   "%s\\%s_%d",
-	   getenv("TEMP"),
-#else
-	   "%s_%d",
-#endif
-	   DEBUG_LOG_FILE,
-	   getpid());
-  if ((where = fopen((suppress_debug) ? NETPERF_NULL : FileName,
-		     "w")) == NULL) {
-    perror("netserver: debug file");
-    exit(1);
-  }
-
-#if !defined(WIN32)
-
-  chmod(FileName,0644);
-
-  /* redirect stdin to "/dev/null" */
-  rd_null_fp = fopen(NETPERF_NULL,"r");
-  if (NULL == rd_null_fp) {
-    fprintf(where,
-	    "%s: opening of %s failed: %s (errno %d)\n",
-	    __FUNCTION__,
-	    NETPERF_NULL,
-	    strerror(errno),
-	    errno);
-    fflush(where);
-    exit(1);
-  }
-
-  if (close(STDIN_FILENO) == -1) {
-    fprintf(where,
-	    "%s: close of STDIN_FILENO failed: %s (errno %d)\n",
-	    __FUNCTION__,
-	    strerror(errno),
-	    errno);
-    fflush(where);
-    exit(1);
-  }
-
-  if (dup(fileno(rd_null_fp)) == -1) {
-    fprintf(where,
-	    "%s: dup of rd_null_fp to stdin failed: %s (errno %d)\n",
-	    __FUNCTION__,
-	    strerror(errno),
-	    errno);
-    fflush(where);
-    exit(1);
-  }
-
-  /* redirect stdout to "where" */
-  if (close(STDOUT_FILENO) == -1) {
-    fprintf(where,
-	    "%s: close of STDOUT_FILENO failed: %s (errno %d)\n",
-	    __FUNCTION__,
-	    strerror(errno),
-	    errno);
-    fflush(where);
-    exit(1);
-  }
-
-  if (dup(fileno(where)) == -1) {
-    fprintf(where,
-	    "%s: dup of where to stdout failed: %s (errno %d)\n",
-	    __FUNCTION__,
-	    strerror(errno),
-	    errno);
-    fflush(where);
-    exit(1);
-  }
-
-  /* redirect stderr to "where" */
-  if (close(STDERR_FILENO) == -1) {
-    fprintf(where,
-	    "%s: close of STDERR_FILENO failed: %s (errno %d)\n",
-	    __FUNCTION__,
-	    strerror(errno),
-	    errno);
-    fflush(where);
-    exit(1);
-  }
-
-  if (dup(fileno(where)) == -1) {
-    fprintf(where,
-	    "%s: dup of where to stderr failed: %s (errno %d)\n",
-	    __FUNCTION__,
-	    strerror(errno),
-	    errno);
-    fflush(where);
-    exit(1);
-  }
-
-#else
-
-  /* Hopefully, by closing stdout & stderr, the subsequent fopen calls
-     will get mapped to the correct std handles. */
-  fclose(stdout);
-
-  if ((where = fopen(FileName, "w")) == NULL) {
-    perror("netserver: fopen of debug file as new stdout failed!");
-    exit(1);
-  }
-
-  fclose(stderr);
-
-  if ((where = fopen(FileName, "w")) == NULL) {
-    fprintf(stdout, "fopen of debug file as new stderr failed!\n");
-    exit(1);
-  }
-
-#endif
-
 }
 
 /* so, either we are a child of inetd in which case server_sock should
@@ -570,14 +412,6 @@ setup_listens(char name[], char port[], int af) {
   int do_inet6;
 #endif
 
-  if (debug) {
-    fprintf(where,
-	    "%s: enter\n",
-	    __FUNCTION__);
-    fflush(where);
-  }
-
-
   if (strcmp(name,"") == 0) {
     no_name = 1;
     switch (af) {
@@ -691,34 +525,6 @@ close_listens(struct listen_elt *list) {
   }
 }
 
-static int
-recv_passphrase() {
-
-  /* may need to revisit the timeout. we only respond if there is an
-     error with receiving the passphrase */
-  if ((recv_request_timed_n(0,20) > 0) &&
-      (netperf_request.content.request_type == PASSPHRASE) &&
-      (!strcmp(passphrase,
-	       (char *)netperf_request.content.test_specific_data))) {
-    /* it was okey dokey */
-    return 0;
-  }
-#if defined(SEND_PASSPHRASE_RESPONSE)
-  netperf_response.content.response_type = PASSPHRASE;
-  netperf_response.content.serv_errno = 403;
-    snprintf((char *)netperf_response.content.test_specific_data,
-	     sizeof(netperf_response.content.test_specific_data),
-	     "Sorry, unable to match with required passphrase\n");
-  send_response_n(0);
-#endif
-  fprintf(where,
-	  "Unable to match required passphrase.  Closing control connection\n");
-  fflush(where);
-
-  close(server_sock);
-  return -1;
-}
-
 /* This routine implements the "main event loop" of the netperf server
    code. Code above it will have set-up the control connection so it
    can just merrily go about its business, which is to "schedule"
@@ -730,20 +536,10 @@ process_requests()
 
   float	temp_rate;
 
-  if (debug) {
-    fprintf(where,
-	    "%s: enter\n",
-	    __FUNCTION__);
-    fflush(where);
-  }
-
   /* if the netserver was started with a passphrase, look for it in
      the first request to arrive.  if there is no passphrase in the
      first request we will end-up dumping the control connection. raj
      2012-01-23 */
-
-  if ((passphrase != NULL)  && (recv_passphrase()))
-      return;
 
   while (1) {
 
@@ -847,9 +643,6 @@ process_requests()
       recv_udp_rr();
       break;
 
-    case PASSPHRASE:
-      break;
-
     default:
       fprintf(where,"unknown test number %d\n",
 	      netperf_request.content.request_type);
@@ -860,171 +653,6 @@ process_requests()
 
     }
   }
-}
-
-/* the routine we call when we are going to spawn/fork/whatnot a child
-   process from the parent netserver daemon. raj 2011-07-08 */
-void
-spawn_child() {
-
-#if defined(HAVE_FORK)
-
-  if (debug) {
-    fprintf(where,
-	    "%s: enter\n",
-	    __FUNCTION__);
-    fflush(where);
-  }
-
-
-  /* flush the usual suspects */
-  fflush(stdin);
-  fflush(stdout);
-  fflush(stderr);
-  fflush(where);
-
-  signal(SIGCLD,SIG_IGN);
-
-  switch (fork()) {
-  case -1:
-    fprintf(where,
-	    "%s: fork() error %s (errno %d)\n",
-	    __FUNCTION__,
-	    strerror(errno),
-	    errno);
-    fflush(where);
-    exit(1);
-
-  case 0:
-    /* we are the child, but not of inetd.  we don't know if we are
-       the child of a daemonized parent or not, so we still need to
-       worry about the standard file descriptors. raj 2011-07-11 */
-
-    close_listens(listen_list);
-    open_debug_file();
-
-    child = 1;
-    netperf_daemon = 0;
-    process_requests();
-    exit(0);
-    break;
-
-  default:
-    /* we are the parent, not a great deal to do here, but we may
-       want to reap some children */
-#if !defined(HAVE_SETSID)
-    /* Only call "waitpid()" if "setsid()" is not used. */
-    while(waitpid(-1, NULL, WNOHANG) > 0) {
-      if (debug) {
-	fprintf(where,
-		"%s: reaped a child process\n",
-		__FUNCTION__);
-      }
-    }
-#endif
-    break;
-  }
-
-#elif defined(WIN32)
-
-  BOOL b;
-  char *cmdline;
-  int cmdline_length;
-  int cmd_index;
-  PROCESS_INFORMATION pi;
-  STARTUPINFO si;
-  int i;
-
-  if (debug) {
-    fprintf(where,
-	    "%s: enter\n",
-	    __FUNCTION__);
-    fflush(where);
-  }
-
-
-  /* create the cmdline array based on strlen(program) + 80 chars */
-  cmdline_length = strlen(program) + 80;
-  cmdline = malloc(cmdline_length + 1);  // +1 for trailing null
-
-  memset(&si, 0 , sizeof(STARTUPINFO));
-  si.cb = sizeof(STARTUPINFO);
-
-  /* Pass the server_sock as stdin for the new process.  Hopefully
-     this will continue to be created with the OBJ_INHERIT
-     attribute. */
-  si.hStdInput = (HANDLE)server_sock;
-  si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-  si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
-  si.dwFlags = STARTF_USESTDHANDLES;
-
-  /* Build cmdline for child process */
-  strcpy(cmdline, program);
-  cmd_index = strlen(cmdline);
-  if (verbosity > 1) {
-    cmd_index += snprintf(&cmdline[cmd_index],
-			  cmdline_length - cmd_index,
-			  " -v %d",
-			  verbosity);
-  }
-  for (i=0; i < debug; i++) {
-    cmd_index += snprintf(&cmdline[cmd_index],
-			  cmdline_length - cmd_index,
-			  " -d");
-  }
-  cmd_index += snprintf(&cmdline[cmd_index],
-			cmdline_length - cmd_index,
-			" -I %x",
-			(int)(UINT_PTR)server_sock);
-
-  /* are these -i settings even necessary? the command line scanning
-     does not seem to do anything with them */
-  cmd_index += snprintf(&cmdline[cmd_index],
-			cmdline_length - cmd_index,
-			" -i %x",
-			(int)(UINT_PTR)server_control);
-  cmd_index += snprintf(&cmdline[cmd_index],
-			cmdline_length - cmd_index,
-			" -i %x",
-			(int)(UINT_PTR)where);
-
-  b = CreateProcess(NULL,    /* Application Name */
-		    cmdline,
-		    NULL,    /* Process security attributes */
-		    NULL,    /* Thread security attributes */
-		    TRUE,    /* Inherit handles */
-		    0,       /* Creation flags
-				PROCESS_QUERY_INFORMATION,  */
-		    NULL,    /* Enviornment */
-		    NULL,    /* Current directory */
-		    &si,     /* StartupInfo */
-		    &pi);
-  if (!b)
-    {
-      perror("CreateProcessfailure: ");
-      free(cmdline); /* even though we exit :) */
-      exit(1);
-    }
-
-  /* We don't need the thread or process handles any more;
-     let them go away on their own timeframe. */
-
-  CloseHandle(pi.hThread);
-  CloseHandle(pi.hProcess);
-
-  /* the caller/parent will close server_sock */
-
-  free(cmdline);
-
-#else
-
-  fprintf(where,
-	  "%s called on platform which cannot spawn children\n",
-	  __FUNCTION__);
-  fflush(where);
-  exit(1);
-
-#endif /* HAVE_FORK */
 }
 
 void
@@ -1062,25 +690,7 @@ accept_connection(SOCKET listen_fd) {
     fflush(where);
     exit(1);
   }
-
-#if defined(SO_KEEPALIVE)
-  /* we are not terribly concerned if this does not work, it is merely
-     duct tape added to belts and suspenders. raj 2011-07-08 */
-  setsockopt(server_sock,
-	     SOL_SOCKET,
-	     SO_KEEPALIVE,
-	     (const char *)&on,
-	     sizeof(on));
-#endif
-
-  if (spawn_on_accept) {
-    spawn_child();
-    /* spawn_child() only returns when we are the parent */
-    close(server_sock);
-  }
-  else {
     process_requests();
-  }
 }
 
 void
@@ -1089,13 +699,6 @@ accept_connections() {
   fd_set read_fds, write_fds, except_fds;
   SOCKET high_fd, candidate;
   int num_ready;
-
-  if (debug) {
-    fprintf(where,
-	    "%s: enter\n",
-	    __FUNCTION__);
-    fflush(where);
-  }
 
   while (1) {
 
@@ -1148,14 +751,6 @@ scan_netserver_args(int argc, char *argv[]) {
 
   int c;
   char arg1[BUFSIZ], arg2[BUFSIZ];
-
-  if (debug) {
-    fprintf(where,
-	    "%s: enter\n",
-	    __FUNCTION__);
-    fflush(where);
-  }
-
   while ((c = getopt(argc, argv, SERVER_ARGS)) != EOF){
     switch (c) {
     case '?':
@@ -1175,13 +770,6 @@ scan_netserver_args(int argc, char *argv[]) {
       spawn_on_accept = 0;
       not_inetd = 1;
       break;
-#ifdef WIN32
-    case 'I':
-      child = TRUE;
-      break;
-    case 'i':
-      break;
-#endif
     case 'L':
       not_inetd = 1;
       break_args_explicit(optarg,arg1,arg2);
@@ -1250,100 +838,6 @@ scan_netserver_args(int argc, char *argv[]) {
   }
 }
 
-void
-daemonize() {
-#if defined(HAVE_FORK)
-
-  if (debug) {
-    fprintf(where,
-	    "%s: enter\n",
-	    __FUNCTION__);
-    fflush(where);
-  }
-
-  /* flush the usual suspects */
-  fflush(stdin);
-  fflush(stdout);
-  fflush(stderr);
-
-  switch (fork()) {
-  case -1:
-    fprintf(stderr,
-	    "%s: fork() error %s (errno %d)\n",
-	    __FUNCTION__,
-	    strerror(errno),
-	    errno);
-    fflush(stderr);
-    exit(1);
-  case 0:
-
-    /* perhaps belt and suspenders, but if we dump core, perhaps
-       better to do so here. we won't worry about the call being
-       successful though. raj 2011-07-08 */
-    chdir(DEBUG_LOG_FILE_DIR);
-
-    /* we are the child. we should get a new "where" to match our new
-       pid */
-
-    open_debug_file();
-
-#ifdef HAVE_SETSID
-      setsid();
-#else
-      setpgrp();
-#endif /* HAVE_SETSID */
-
-      signal(SIGCLD, SIG_IGN);
-
-      /* ok, we can start accepting control connections now */
-      accept_connections();
-
-  default:
-    /* we are the parent, nothing to do but exit? */
-    exit(0);
-  }
-
-#else
-  fprintf(where,
-	  "%s called on platform which cannot daemonize\n",
-	  __FUNCTION__);
-  fflush(where);
-  exit(1);
-#endif /* HAVE_FORK */
-}
-
-static void
-check_if_inetd() {
-
-  if (debug) {
-    fprintf(where,
-	    "%s: enter\n",
-	    __FUNCTION__);
-    fflush(where);
-  }
-
-  if (not_inetd) {
-    return;
-  }
-  else {
-#if !defined(WIN32) && !defined(__VMS)
-    struct sockaddr_storage name;
-    netperf_socklen_t namelen;
-
-    namelen = sizeof(name);
-    if (getsockname(0,
-		    (struct sockaddr *)&name,
-		    &namelen) == SOCKET_ERROR) {
-      not_inetd = 1;
-    }
-    else {
-      not_inetd = 0;
-      child = 1;
-    }
-#endif
-  }
-}
-
 /* OK, so how does all this work you ask?  Well, we are in a maze of
    twisty options, all different.  Netserver can be invoked as a child
    of inetd or the VMS auxiliary server process, or a parent netserver
@@ -1399,39 +893,10 @@ main(int argc, char *argv[]) {
 
   scan_netserver_args(argc, argv);
 
-  check_if_inetd();
-
-  if (child) {
-    /* we are the child of either an inetd or parent netserver via
-       spawning (Windows) rather than fork()ing. if we were fork()ed
-       we would not be coming through this way. set_server_sock() must
-       be called before open_debug_file() or there is a chance that
-       we'll toast the descriptor when we do not wish it. */
-    set_server_sock();
-    open_debug_file();
-    process_requests();
-  }
-  else if (daemon_parent) {
-    /* we are the parent daemonized netserver
-       process. accept_connections() will decide if we want to spawn a
-       child process */
-    accept_connections();
-  }
-  else {
     /* we are the top netserver process, so we have to create the
        listen endpoint(s) and decide if we want to daemonize */
     setup_listens(local_host_name,listen_port,local_address_family);
-    if (want_daemonize) {
-      daemonize();
-    }
-    accept_connections();
-  }
-
-  unlink_empty_debug_file();
-
-#ifdef WIN32
-  WSACleanup();
-#endif
+	accept_connections();
 
   return 0;
 

@@ -1364,30 +1364,10 @@ void
 netlib_init_cpu_map() {
 
   int i;
-#ifdef HAVE_MPCTL
-  int num;
-  i = 0;
-  /* I go back and forth on whether this should be the system-wide set
-     of calls, or if the processor set versions (sans the _SYS) should
-     be used.  at the moment I believe that the system-wide version
-     should be used. raj 2006-04-03 */
-  num = mpctl(MPC_GETNUMSPUS_SYS,0,0);
-  lib_cpu_map[i] = mpctl(MPC_GETFIRSTSPU_SYS,0,0);
-  for (i = 1;((i < num) && (i < MAXCPUS)); i++) {
-    lib_cpu_map[i] = mpctl(MPC_GETNEXTSPU_SYS,lib_cpu_map[i-1],0);
-  }
-  /* from here, we set them all to -1 because if we launch more
-     loopers than actual CPUs, well, I'm not sure why :) */
-  for (; i < MAXCPUS; i++) {
-    lib_cpu_map[i] = -1;
-  }
-
-#else
   /* we assume that there is indeed a contiguous mapping */
   for (i = 0; i < MAXCPUS; i++) {
     lib_cpu_map[i] = i;
   }
-#endif
 }
 
 
@@ -1430,15 +1410,6 @@ netlib_init()
      2006-04-03 */
 
   netlib_init_cpu_map();
-
-  if (debug) {
-    fprintf(where,
-            "netlib_init: request_array at %p\n"
-            "netlib_init: response_array at %p\n",
-            request_array,
-            response_array);
-    fflush(where);
-  }
 
   /* some functionality might want to use random numbers, so we should
      initialize the random number generator */
@@ -3248,19 +3219,6 @@ establish_control_internal(char *hostname,
   local_res = resolve_host(localhost, localport, locfam);
   if (!local_res)
     return(INVALID_SOCKET);
-
-  if (debug) {
-    fprintf(where,
-            "establish_control called with host '%s' port '%s' remfam %s\n"
-            "\t\tlocal '%s' port '%s' locfam %s\n",
-            hostname,
-            port,
-            inet_ftos(remfam),
-            localhost,
-            localport,
-            inet_ftos(locfam));
-    fflush(where);
-  }
 
   not_connected = 1;
   local_res_temp = local_res;

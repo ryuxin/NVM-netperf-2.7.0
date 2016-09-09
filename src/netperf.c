@@ -87,14 +87,6 @@ main(int argc, char *argv[])
   if (!no_control) {
     establish_control(host_name,test_port,address_family,
 		      local_host_name,local_test_port,local_address_family);
-
-    if (passphrase != NULL) {
-      netperf_request.content.request_type = PASSPHRASE;
-      strncpy((char *)netperf_request.content.test_specific_data,
-	      passphrase,
-	      sizeof(netperf_request.content.test_specific_data));
-      send_request_n(0);
-    }
   }
 
   if (strcasecmp(test_name,"TCP_STREAM") == 0) {
